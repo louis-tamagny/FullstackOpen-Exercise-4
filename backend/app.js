@@ -8,12 +8,12 @@ const mongoose = require('mongoose')
 
 const mongoUrl = config.MONGODB_URI
 mongoose.connect(mongoUrl)
-    .then(() => {
-        logger.info('connected to MongoDB')
-    })
-    .catch(error => {
-        logger.error(error.message)
-    })
+  .then(() => {
+    logger.info('connected to MongoDB')
+  })
+  .catch(error => {
+    logger.error(error.message)
+  })
 
 app.use(cors())
 app.use(express.json())
