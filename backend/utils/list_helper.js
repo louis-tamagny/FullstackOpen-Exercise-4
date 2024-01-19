@@ -24,6 +24,42 @@ const favoriteBlog = (blogs) => {
     : blogs.reduce(reducer, blogs[0])
 }
 
+const mostBlogs = (blogs) => {
+  if (blogs.length === 0) {return null}
+
+  const authors = {}
+  authors[`${blogs[0].author}`] = 1
+
+  const reducer = (mostAuthor, blog) => {
+    if (!(blog.author in authors)) {authors[`${blog.author}`] = 0}
+    authors[`${blog.author}`] = authors[`${blog.author}`] + 1
+
+    return authors[`${mostAuthor.author}`] < authors[`${blog.author}`] 
+      ? {author: blog.author, blogs: authors[`${blog.author}`]}
+      : mostAuthor
+  }
+
+  return blogs.reduce(reducer, {author: blogs[0].author, blogs: 1})
+}
+
+const mostLikes = (blogs) => {
+  if (blogs.length === 0) {return null}
+
+  const authors = {}
+  authors[`${blogs[0].author}`] = 1
+
+  const reducer = (mostAuthor, blog) => {
+    if (!(blog.author in authors)) {authors[`${blog.author}`] = 0}
+    authors[`${blog.author}`] = authors[`${blog.author}`] + blog.likes
+
+    return authors[`${mostAuthor.author}`] < authors[`${blog.author}`] 
+      ? {author: blog.author, likes: authors[`${blog.author}`]}
+      : mostAuthor
+  }
+
+  return blogs.reduce(reducer, {author: blogs[0].author, likes: blogs[0].likes})
+}
+
 module.exports = {
-  dummy, totalLikes, favoriteBlog
+  dummy, totalLikes, favoriteBlog, mostBlogs, mostLikes
 }
