@@ -12,6 +12,12 @@ test('all blogs are returned in JSON formatting', async () => {
   expect(response.body.length).toBe(2)
 })
 
+test('unique identifier is named id', async () => {
+  const response = await api.get('/api/blogs')
+  console.log(response.body)
+  expect(response.body[0].id).toBeDefined()
+})
+
 afterAll( async () => {
   await mongoose.connection.close()
 })
