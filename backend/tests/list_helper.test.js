@@ -118,7 +118,7 @@ describe('author with most blogs', () => {
 
   test('when there is no blogs', () => {
     const result = listHelper.mostBlogs([])
-    expect(result).toEqual(null)
+    expect(result).toEqual({})
   })
 
   test('when there is one blog', () => {
@@ -143,7 +143,7 @@ describe('author with most likes', () => {
 
   test('when there is no blogs', () => {
     const result = listHelper.mostLikes([])
-    expect(result).toEqual(null)
+    expect(result).toEqual({})
   })
 
   test('when there is one blog', () => {
