@@ -86,6 +86,20 @@ test('new blog is created', async () => {
   expect(response.body[response.body.length -1].url).toEqual(newBlog.url)  
 })
 
+test('new blog without likes is created', async () => {
+  const newBlogWithoutLikes = {
+    title: 'a new blog full of stuff',
+    author: 'Robert S. Villeneuve',
+    url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html'
+  }
+  const response = await api.post('/api/blogs')
+    .send(newBlogWithoutLikes)
+    .expect(201)
+
+  expect(response.body.likes).toBeDefined()
+  expect(response.body.likes).toBe(0)
+})
+
 afterAll( async () => {
   await mongoose.connection.close()
 })
