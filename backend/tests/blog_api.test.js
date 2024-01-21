@@ -5,19 +5,67 @@ const api = supertest(app)
 const Blog = require('../models/blog')
 
 const newBlog = {
-  title: 'Go To Statement Considered Harmful',
-  author: 'Edsger W. Dijkstra',
+  title: 'a new blog full of stuff',
+  author: 'Robert S. Villeneuve',
   url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
-  likes: 5,
+  likes: 3,
 }
 
+const blogList = [
+  {
+    title: 'React patterns',
+    author: 'Michael Chan',
+    url: 'https://reactpatterns.com/',
+    likes: 7
+  },
+  {
+    title: 'Go To Statement Considered Harmful',
+    author: 'Edsger W. Dijkstra',
+    url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
+    likes: 5
+  },
+  {
+    title: 'Canonical string reduction',
+    author: 'Edsger W. Dijkstra',
+    url: 'http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html',
+    likes: 12
+  },
+  {
+    title: 'First class tests',
+    author: 'Robert C. Martin',
+    url: 'http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll',
+    likes: 10
+  },
+  {
+    title: 'TDD harms architecture',
+    author: 'Robert C. Martin',
+    url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html',
+    likes: 0
+  },
+  {
+    title: 'Type wars',
+    author: 'Robert C. Martin',
+    url: 'http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html',
+    likes: 2
+  }  
+]
+
 app.use(supertest)
+
+beforeEach(async () => {
+  await Blog.deleteMany({})
+
+  for (let blog of blogList) {
+    const newBlog = new Blog(blog)
+    await newBlog.save()
+  }
+})
 
 test('all blogs are returned in JSON formatting', async () => {
   const response = await api.get('/api/blogs')
     .expect(200)
     .expect('Content-Type', /application\/json/)
-  expect(response.body.length).toBe(2)
+  expect(response.body.length).toBe(blogList.length)
 })
 
 test('unique identifier is named id', async () => {
@@ -26,14 +74,16 @@ test('unique identifier is named id', async () => {
 })
 
 test('new blog is created', async () => {
-  await api.post('/api/blogs', newBlog)
+  await api.post('/api/blogs')
+    .send(newBlog)
     .expect(201)
   
   const response = await api.get('/api/blogs')
-  expect(response.body.length).toBe(3)
-
-  expect(response.body[response.body.length -1]).toEqual(new Blog(newBlog))
-
+  expect(response.body.length).toBe(blogList.length + 1)
+  expect(response.body[response.body.length -1].title).toEqual(newBlog.title)
+  expect(response.body[response.body.length -1].likes).toEqual(newBlog.likes)
+  expect(response.body[response.body.length -1].author).toEqual(newBlog.author)
+  expect(response.body[response.body.length -1].url).toEqual(newBlog.url)  
 })
 
 afterAll( async () => {
