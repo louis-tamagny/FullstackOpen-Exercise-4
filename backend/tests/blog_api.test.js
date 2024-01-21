@@ -126,7 +126,7 @@ test('a blog is deleted', async () => {
   const newBlog = {
     title: 'a new blog full of stuff',
     author: 'Robert S. Villeneuve',
-    url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html'
+    url: 'http://notareal.url'
   }
 
   let result = await api.post('/api/blogs').send(newBlog)
@@ -135,6 +135,26 @@ test('a blog is deleted', async () => {
   const response = await api.get('/api/blogs')
   expect(response.body.length).toBe(blogList.length)
   expect(JSON.stringify(response.body)).not.toContain(result.body.id)
+})
+
+test('a blog is updated', async () => {
+  const newBlog = {
+    title: 'a new blog full of stuff',
+    author: 'Robert S. Villeneuve',
+    url: 'http://notareal.url',
+    likes: 10
+  }
+
+  let response = await api.get('/api/blogs')
+  await api
+    .put(`/api/blogs/${response.body[0].id}`)
+    .send(newBlog)
+    .expect(200)
+  response = await api.get('/api/blogs')
+  expect(response.body[0].title).toBe(newBlog.title)
+  expect(response.body[0].author).toBe(newBlog.author)
+  expect(response.body[0].url).toBe(newBlog.url)
+  expect(response.body[0].likes).toBe(newBlog.likes)
 })
 
 
