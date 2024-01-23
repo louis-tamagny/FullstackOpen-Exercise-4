@@ -3,6 +3,7 @@ const app = require('../app')
 const mongoose = require('mongoose')
 const api = supertest(app)
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 const blogList = [
   {
@@ -43,15 +44,41 @@ const blogList = [
   }  
 ]
 
+const userList = [
+  {
+    username: 'blapointe',
+    name: 'Bobby Lapointe',
+    password: 'bobbylapointe'
+  },
+  {
+    username: 'ltamagny',
+    name: 'Louis Tamagny',
+    password: 'louistamagny'
+  }
+]
+let authorization = ''
+
 app.use(supertest)
 
 beforeEach(async () => {
   await Blog.deleteMany({})
+  await User.deleteMany({})
 
   for (let blog of blogList) {
     const newBlog = new Blog(blog)
     await newBlog.save()
   }
+
+  for (let user of userList) {
+    await api
+      .post('/api/users')
+      .send(user)
+  }
+
+  authorization = await api.post('/api/login')
+    .send({username: userList[0].username, password: userList[0].password})
+    
+  authorization = 'Bearer ' + authorization.body.token
 })
 
 test('all blogs are returned in JSON formatting', async () => {
@@ -66,8 +93,8 @@ test('unique identifier is named id', async () => {
   expect(response.body[0].id).toBeDefined()
 })
 
-describe('new blog', () => {
-  test('new blog is created', async () => {
+describe('new blog is created', () => {
+  test('valid', async () => {
     const newBlog = {
       title: 'a new blog full of stuff',
       author: 'Robert S. Villeneuve',
@@ -75,7 +102,9 @@ describe('new blog', () => {
       likes: 3,
     }
 
-    await api.post('/api/blogs')
+    await api
+      .post('/api/blogs')
+      .set('Authorization', authorization)
       .send(newBlog)
       .expect(201)
     
@@ -87,13 +116,14 @@ describe('new blog', () => {
     expect(response.body[response.body.length -1].url).toEqual(newBlog.url)  
   })
 
-  test('new blog without likes is created', async () => {
+  test('without likes', async () => {
     const newBlog = {
       title: 'a new blog full of stuff',
       author: 'Robert S. Villeneuve',
       url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html'
     }
     const response = await api.post('/api/blogs')
+      .set('Authorization', authorization)
       .send(newBlog)
       .expect(201)
 
@@ -101,40 +131,64 @@ describe('new blog', () => {
     expect(response.body.likes).toBe(0)
   })
 
-  test('new blog without title is created', async () => {
+  test('without title', async () => {
     const newBlogWithoutTitle = {
       author: 'Robert S. Villeneuve',
       url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html'
     }
     await api.post('/api/blogs')
+      .set('Authorization', authorization)
       .send(newBlogWithoutTitle)
       .expect(400)
   })
 
-  test('new blog without URL is created', async () => {
+  test('without URL', async () => {
     const newBlogWithoutUrl = {
       title: 'a new blog full of stuff',
       author: 'Robert S. Villeneuve'
     }
     await api.post('/api/blogs')
+      .set('Authorization', authorization)
       .send(newBlogWithoutUrl)
       .expect(400) 
   })
 })
+describe('blog is deleted', () => {
+  test('valid delete', async () => {
+    const newBlog = {
+      title: 'a new blog full of stuff',
+      author: 'Robert S. Villeneuve',
+      url: 'http://notareal.url'
+    }
 
-test('a blog is deleted', async () => {
-  const newBlog = {
-    title: 'a new blog full of stuff',
-    author: 'Robert S. Villeneuve',
-    url: 'http://notareal.url'
-  }
+    let result = await api.post('/api/blogs')
+      .set('Authorization', authorization)
+      .send(newBlog)
+    await api
+      .delete(`/api/blogs/${result.body.id}`)
+      .set('Authorization', authorization)
+      .expect(200)
 
-  let result = await api.post('/api/blogs').send(newBlog)
-  await api.delete(`/api/blogs/${result.body.id}`).expect(200)
+    const response = await api
+      .get('/api/blogs')
+    expect(response.body.length).toBe(blogList.length)
+    expect(JSON.stringify(response.body)).not.toContain(result.body.id)
+  })
 
-  const response = await api.get('/api/blogs')
-  expect(response.body.length).toBe(blogList.length)
-  expect(JSON.stringify(response.body)).not.toContain(result.body.id)
+  test('invalid delete', async () => {
+    const newBlog = {
+      title: 'a new blog full of stuff',
+      author: 'Robert S. Villeneuve',
+      url: 'http://notareal.url'
+    }
+
+    let result = await api.post('/api/blogs')
+      .set('Authorization', authorization)
+      .send(newBlog)
+    await api
+      .delete(`/api/blogs/${result.body.id}`)
+      .expect(401)
+  })
 })
 
 test('a blog is updated', async () => {
